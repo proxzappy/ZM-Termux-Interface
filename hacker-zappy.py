@@ -26,22 +26,38 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
-def generate_banner(username):
-    display_name = username if username else "HACKER ZAPPY"
-    
-    # Try using figlet to generate dynamic ASCII art for the user's name
-    try:
-        ascii_art = subprocess.check_output(['figlet', display_name]).decode('utf-8')
-        # Remove extra blank lines at start/end
-        ascii_art = "\n".join([line for line in ascii_art.split('\n') if line.strip()])
-    except Exception:
-        # Fallback if figlet is not installed
-        ascii_art = f"\n  ██████ {display_name.upper()} ██████\n"
+def generate_banner(username=None):
+    # Agar user ka name nahi hai, toh original HACKER ZAPPY banner dikhao
+    if not username or username.upper() == "HACKER ZAPPY":
+        display_name = "HACKER ZAPPY"
+        ascii_art = """
+██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
+██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
+███████║███████║██║     █████╔╝ █████╗  ██████╔╝
+██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
+██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+███████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗       
+╚══███╔╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝       
+  ███╔╝ ███████║██████╔╝██████╔╝ ╚████╔╝        
+ ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
+███████╗██║  ██║██║     ██║        ██║          
+╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          """
+    else:
+        # Jab user apna name dale, toh usko dynamically ASCII block art mein convert karo
+        display_name = username.upper()
+        try:
+            # figlet se user ka name generate hoga
+            ascii_output = subprocess.check_output(['figlet', '-f', 'standard', display_name]).decode('utf-8')
+            # Extra blank lines remove kar rahe hain
+            ascii_art = "\n" + "\n".join([line for line in ascii_output.split('\n') if line.strip()])
+        except Exception:
+            # Agar figlet install nahi hai, toh simple text dikhao
+            ascii_art = f"\n  ██████ {display_name} ██████\n"
 
-    return f"""
-{GREEN}{ascii_art}{RESET}
+    return f"""{GREEN}{ascii_art}{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
-{YELLOW} [+] OWNER     : {WHITE}{display_name.upper()}{RESET}
+{YELLOW} [+] OWNER     : {WHITE}{display_name}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_2}{RESET}
 {MAGENTA} [+] TERMINAL  : {WHITE}ZM TERMUX INTERFACE{RESET}
