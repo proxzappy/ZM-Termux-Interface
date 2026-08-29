@@ -5,8 +5,6 @@ import pty
 import tty
 import termios
 import select
-import signal
-import subprocess
 from pathlib import Path
 
 # ==================== CONFIGURATION ====================
@@ -20,7 +18,6 @@ USER_FILE = CONFIG_DIR / "username"
 # ==================== ANSI COLORS ====================
 RESET = "\033[0m"
 BOLD = "\033[1m"
-DIM = "\033[2m"
 BLINK = "\033[5m"
 WHITE = "\033[1;37m"
 GREEN = "\033[38;5;46m"
@@ -99,7 +96,6 @@ def startup_animation():
     sleep(0.4)
 
 def short_loading(username):
-    """A quick loading animation shown every time."""
     write(f"\n{GREEN}[+] Welcome back, {WHITE}{username}{GREEN}!{RESET}\n")
     steps = 10
     for i in range(steps + 1):
@@ -158,7 +154,6 @@ def first_run():
 
 # ==================== SHELL PROMPT ====================
 def build_bash_ps1(username):
-    # Use raw string for the ANSI escape to avoid Python warnings
     cwd = os.getcwd()
     home = str(Path.home())
     if cwd == home:
@@ -228,7 +223,7 @@ class ZappyShell:
         self.old_terminal = None
 
     def spawn(self):
-        shell = os.environ.get("SHELL", "/data/data/com.termux/files/usr/bin/bash")
+        shell = os.environ.get("SHELL", "/bin/bash")
         if not os.path.exists(shell):
             shell = "/bin/bash"
 
@@ -236,7 +231,7 @@ class ZappyShell:
         env["TERM"] = env.get("TERM", "xterm-256color")
         env["COLORTERM"] = "truecolor"
         env["ZAPPY_USER"] = self.username
-        env["PS1"] = build_bash_ps1(self.username)   # set custom prompt
+        env["PS1"] = build_bash_ps1(self.username)
 
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
@@ -268,7 +263,6 @@ class ZappyShell:
 
 # ==================== MAIN SHELL LOOP ====================
 def run_zappy(username):
-    # Show quick welcome animation
     short_loading(username)
 
     shell = ZappyShell(username)
@@ -281,53 +275,58 @@ def run_zappy(username):
         while True:
             readable, _, _ = select.select([sys.stdin, shell.fd], [], [], 0.05)
 
-            # User input
+            # ---------- USER INPUT ----------
             if sys.stdin in readable:
                 data = os.read(sys.stdin.fileno(), 4096)
                 if not data:
                     break
 
-                if data == b"\x04":  # Ctrl-D
+                # Ctrl-D -> exit
+                if data == b"\x04":
                     os.write(shell.fd, b"exit\n")
                     break
 
-                if b"\x03" in data:  # Ctrl-C
+                # Ctrl-C -> send interrupt, clear buffer
+                if b"\x03" in data:
                     os.write(shell.fd, b"\x03")
                     command_buffer = b""
                     continue
 
+                # Handle Enter (newline) - we need to delay it for animation
                 if b"\r" in data or b"\n" in data:
                     normalized = data.replace(b"\r\n", b"\n")
                     pieces = normalized.split(b"\n")
 
                     for i, piece in enumerate(pieces):
-                        if piece:
+                        if piece:  # characters before newline
                             command_buffer += piece
-                        if i < len(pieces) - 1:
+                            os.write(shell.fd, piece)  # forward characters
+
+                        if i < len(pieces) - 1:  # newline found
                             command = command_buffer.decode("utf-8", errors="ignore")
                             command_buffer = b""
                             command_clean = command.strip()
 
+                            # Built-in exit / logout
                             if command_clean in ("exit", "logout"):
                                 shell.restore_terminal()
                                 write(f"\n{GREEN}[✓] Leaving ZAPPY SHELL...{RESET}\n")
                                 return
 
-                            if command_clean == "clear":
-                                os.write(shell.fd, b"clear\n")
-                                continue
-
+                            # Show animation for normal commands
                             if should_process(command):
                                 shell.restore_terminal()
                                 processing_animation(command)
                                 shell.configure_terminal()
 
-                            os.write(shell.fd, command.encode() + b"\n")
+                            # Now send the newline to execute the command
+                            os.write(shell.fd, b"\n")
                 else:
+                    # Regular character - forward to shell immediately
                     command_buffer += data
                     os.write(shell.fd, data)
 
-            # Shell output
+            # ---------- SHELL OUTPUT ----------
             if shell.fd in readable:
                 try:
                     output = os.read(shell.fd, 8192)
