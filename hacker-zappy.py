@@ -98,6 +98,18 @@ def startup_animation():
     write(f"\n{GREEN}[✓] ZAPPY terminal environment ready.{RESET}\n")
     sleep(0.4)
 
+def short_loading(username):
+    """A quick loading animation shown every time."""
+    write(f"\n{GREEN}[+] Welcome back, {WHITE}{username}{GREEN}!{RESET}\n")
+    steps = 10
+    for i in range(steps + 1):
+        filled = "█" * i
+        empty = "░" * (steps - i)
+        write(f"\r{LIGHT_GREEN}[{filled}{empty}] {i*10:3d}%{RESET}")
+        sleep(0.03)
+    write(f"\r{GREEN}[██████████] 100%{RESET}\n")
+    sleep(0.2)
+
 # ==================== USERNAME MANAGEMENT ====================
 def sanitize_username(name):
     name = name.strip()
@@ -146,7 +158,7 @@ def first_run():
 
 # ==================== SHELL PROMPT ====================
 def build_bash_ps1(username):
-    """Create a bash-safe PS1 with proper \[ \] for non-printing chars."""
+    # Use raw string for the ANSI escape to avoid Python warnings
     cwd = os.getcwd()
     home = str(Path.home())
     if cwd == home:
@@ -157,17 +169,17 @@ def build_bash_ps1(username):
         location = cwd
 
     ps1 = (
-        "\\[\\033[38;5;46m\\]"      # green
+        r"\[\033[38;5;46m\]"      # green
         f"{username.upper()}"
-        "\\[\\033[0m\\]"            # reset
+        r"\[\033[0m\]"            # reset
         "@"
-        "\\[\\033[38;5;39m\\]"      # cyan
+        r"\[\033[38;5;39m\]"      # cyan
         "HACKER-ZAPPY"
-        "\\[\\033[0m\\]"
+        r"\[\033[0m\]"
         ":"
-        "\\[\\033[38;5;220m\\]"     # yellow
+        r"\[\033[38;5;220m\]"     # yellow
         f"{location}"
-        "\\[\\033[0m\\]"
+        r"\[\033[0m\]"
         " $ "
     )
     return ps1
@@ -224,7 +236,7 @@ class ZappyShell:
         env["TERM"] = env.get("TERM", "xterm-256color")
         env["COLORTERM"] = "truecolor"
         env["ZAPPY_USER"] = self.username
-        env["PS1"] = build_bash_ps1(self.username)   # <-- set prompt here
+        env["PS1"] = build_bash_ps1(self.username)   # set custom prompt
 
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
@@ -256,6 +268,9 @@ class ZappyShell:
 
 # ==================== MAIN SHELL LOOP ====================
 def run_zappy(username):
+    # Show quick welcome animation
+    short_loading(username)
+
     shell = ZappyShell(username)
     shell.spawn()
     shell.resize_pty()
@@ -266,24 +281,21 @@ def run_zappy(username):
         while True:
             readable, _, _ = select.select([sys.stdin, shell.fd], [], [], 0.05)
 
-            # Handle user input
+            # User input
             if sys.stdin in readable:
                 data = os.read(sys.stdin.fileno(), 4096)
                 if not data:
                     break
 
-                # Ctrl-D -> exit
-                if data == b"\x04":
+                if data == b"\x04":  # Ctrl-D
                     os.write(shell.fd, b"exit\n")
                     break
 
-                # Ctrl-C -> send interrupt and clear buffer
-                if b"\x03" in data:
+                if b"\x03" in data:  # Ctrl-C
                     os.write(shell.fd, b"\x03")
                     command_buffer = b""
                     continue
 
-                # Enter (newline) handling
                 if b"\r" in data or b"\n" in data:
                     normalized = data.replace(b"\r\n", b"\n")
                     pieces = normalized.split(b"\n")
@@ -296,30 +308,26 @@ def run_zappy(username):
                             command_buffer = b""
                             command_clean = command.strip()
 
-                            # Built-in exit/logout
                             if command_clean in ("exit", "logout"):
                                 shell.restore_terminal()
                                 write(f"\n{GREEN}[✓] Leaving ZAPPY SHELL...{RESET}\n")
                                 return
 
-                            # Built-in clear
                             if command_clean == "clear":
                                 os.write(shell.fd, b"clear\n")
                                 continue
 
-                            # Show processing animation for normal commands
                             if should_process(command):
                                 shell.restore_terminal()
                                 processing_animation(command)
                                 shell.configure_terminal()
 
-                            # Send command to shell
                             os.write(shell.fd, command.encode() + b"\n")
                 else:
                     command_buffer += data
                     os.write(shell.fd, data)
 
-            # Handle shell output
+            # Shell output
             if shell.fd in readable:
                 try:
                     output = os.read(shell.fd, 8192)
