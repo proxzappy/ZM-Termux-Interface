@@ -24,7 +24,7 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
-BANNER = f""" 
+BANNER = f"""
 {GREEN}██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
 ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
 ███████║███████║██║     █████╔╝ █████╗  ██████╔╝
@@ -37,7 +37,6 @@ BANNER = f"""
  ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
 ███████╗██║  ██║██║     ██║        ██║          
 ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          {RESET}
-
 
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
 {YELLOW} [+] OWNER     : {WHITE}HACKER ZAPPY{RESET}
@@ -270,16 +269,7 @@ zappy_process() {{
     [ -z "$command" ] && return
 
     case "$command" in
-        zappy_process*)
-            return
-            ;;
-        zappy_prompt*)
-            return
-            ;;
-        trap*)
-            return
-            ;;
-        clear|reset|exit|logout)
+        zappy_process*|zappy_debug*|zappy_prompt*|local*|trap*|clear|reset|exit|logout)
             return
             ;;
         nano*|vim*|vi*|nvim*|top*|htop*|ssh*|sftp*)
@@ -309,36 +299,26 @@ zappy_process() {{
     done
 
     printf "\\r${{ZAPPY_GREEN}}[████████████████████]${{ZAPPY_RESET}} ${{ZAPPY_WHITE}}100%%${{ZAPPY_RESET}}\\n"
-}
+}}
 
 zappy_debug() {{
+    # Disable DEBUG trap to prevent recursion
+    trap - DEBUG
+
     local command="$BASH_COMMAND"
 
-    if [ "${{ZAPPY_RUNNING:-0}}" = "1" ]; then
-        return
-    fi
-
     case "$command" in
-        zappy_process*)
-            return
+        zappy_process*|zappy_debug*|zappy_prompt*|local*|trap*)
             ;;
-        zappy_debug*)
-            return
+        clear|reset|exit|logout|nano*|vim*|vi*|nvim*|top*|htop*|ssh*|sftp*)
             ;;
-        zappy_prompt*)
-            return
-            ;;
-        local*)
-            return
-            ;;
-        trap*)
-            return
+        *)
+            zappy_process "$command"
             ;;
     esac
 
-    ZAPPY_RUNNING=1
-    zappy_process "$command"
-    ZAPPY_RUNNING=0
+    # Re-enable the DEBUG trap
+    trap 'zappy_debug' DEBUG
 }}
 
 PROMPT_COMMAND="zappy_prompt"
