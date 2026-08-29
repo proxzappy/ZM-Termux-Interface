@@ -6,6 +6,7 @@ import select
 import termios
 import tty
 import tempfile
+import subprocess
 from pathlib import Path
 
 APP_NAME = "HACKER ZAPPY"
@@ -25,61 +26,38 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
-# VIP Custom ASCII Dictionary (Exactly matching your given style)
-ASCII_FONT = {
-    'A': ["█████╗  ", "██╔══██╗", "███████║", "██╔══██║", "██║  ██║", "╚═╝  ╚═╝"],
-    'B': ["██████╗ ", "██╔══██╗", "██████╦╝", "██╔══██╗", "██████╦╝", "╚═════╝ "],
-    'C': ["██████╗ ", "██╔════╝", "██║     ", "██║     ", "╚██████╗", " ╚═════╝"],
-    'D': ["██████╗ ", "██╔══██╗", "██║  ██║", "██║  ██║", "██████╔╝", "╚═════╝ "],
-    'E': ["███████╗", "██╔════╝", "█████╗  ", "██╔══╝  ", "███████╗", "╚══════╝"],
-    'F': ["███████╗", "██╔════╝", "█████╗  ", "██╔══╝  ", "██║     ", "╚═╝     "],
-    'G': ["██████╗ ", "██╔════╝", "██║  ███╗", "██║   ██║", "╚██████╔╝", " ╚═════╝"],
-    'H': ["██╗  ██╗", "██║  ██║", "███████║", "██╔══██║", "██║  ██║", "╚═╝  ╚═╝"],
-    'I': ["██╗", "██║", "██║", "██║", "██║", "╚═╝"],
-    'J': ["      ██╗", "      ██║", "      ██║", "██╗   ██║", "╚██████╔╝", " ╚═════╝ "],
-    'K': ["██╗  ██╗", "██║ ██╔╝", "█████╔╝ ", "██╔═██╗ ", "██║  ██╗", "╚═╝  ╚═╝"],
-    'L': ["██╗     ", "██║     ", "██║     ", "██║     ", "███████╗", "╚══════╝"],
-    'M': ["███╗   ███╗", "████╗ ████║", "██╔████╔██║", "██║╚██╔╝██║", "██║ ╚═╝ ██║", "╚═╝     ╚═╝"],
-    'N': ["██╗   ██╗", "████╗  ██║", "██╔██╗ ██║", "██║╚██╗██║", "██║ ╚████║", "╚═╝  ╚═══╝"],
-    'O': ["██████╗ ", "██╔═══██╗", "██║   ██║", "██║   ██║", "╚██████╔╝", " ╚═════╝ "],
-    'P': ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔═══╝ ", "██║     ", "╚═╝     "],
-    'Q': ["██████╗ ", "██╔═══██╗", "██║   ██║", "██║▄▄ ██║", "╚██████╔╝", " ╚══▀▀═╝ "],
-    'R': ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔══██╗", "██║  ██║", "╚═╝  ╚═╝"],
-    'S': ["███████╗", "██╔════╝", "███████╗", "╚════██║", "███████║", "╚══════╝"],
-    'T': ["████████╗", "╚══██╔══╝", "   ██║   ", "   ██║   ", "   ██║   ", "   ╚═╝   "],
-    'U': ["██╗   ██╗", "██║   ██║", "██║   ██║", "██║   ██║", "╚██████╔╝", " ╚═════╝ "],
-    'V': ["██╗   ██╗", "██║   ██║", "██║   ██║", "╚██╗ ██╔╝", " ╚████╔╝ ", "  ╚═══╝  "],
-    'W': ["██╗    ██╗", "██║    ██║", "██║ █╗ ██║", "██║███╗██║", "╚███╔███╔╝", " ╚══╝╚══╝ "],
-    'X': ["██╗  ██╗", "╚██╗██╔╝", " ╚███╔╝ ", " ██╔██╗ ", "██╔╝ ██╗", "╚═╝  ╚═╝"],
-    'Y': ["██╗   ██╗", "╚██╗ ██╔╝", " ╚████╔╝ ", "  ╚██╔╝  ", "   ██║   ", "   ╚═╝   "],
-    'Z': ["███████╗", "╚══███╔╝", "  ███╔╝ ", " ███╔╝  ", "███████╗", "╚══════╝"],
-    ' ': ["    ", "    ", "    ", "    ", "    ", "    "]
-}
+def generate_banner(username=None):
+    # Agar user ka name nahi hai, toh original HACKER ZAPPY banner dikhao
+    if not username or username.upper() == "HACKER ZAPPY":
+        display_name = "HACKER ZAPPY"
+        ascii_art = """
+██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
+██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
+███████║███████║██║     █████╔╝ █████╗  ██████╔╝
+██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
+██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+███████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗       
+╚══███╔╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝       
+  ███╔╝ ███████║██████╔╝██████╔╝ ╚████╔╝        
+ ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
+███████╗██║  ██║██║     ██║        ██║          
+╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          """
+    else:
+        # Jab user apna name dale, toh usko dynamically ASCII block art mein convert karo
+        display_name = username.upper()
+        try:
+            # figlet se user ka name generate hoga
+            ascii_output = subprocess.check_output(['figlet', '-f', 'standard', display_name]).decode('utf-8')
+            # Extra blank lines remove kar rahe hain
+            ascii_art = "\n" + "\n".join([line for line in ascii_output.split('\n') if line.strip()])
+        except Exception:
+            # Agar figlet install nahi hai, toh simple text dikhao
+            ascii_art = f"\n  ██████ {display_name} ██████\n"
 
-def generate_ascii_name(name):
-    if not name:
-        name = "ZAPPY"
-    name = name.upper()
-    lines = ["", "", "", "", "", ""]
-    
-    for char in name:
-        if char in ASCII_FONT:
-            for i in range(6):
-                lines[i] += ASCII_FONT[char][i] + " "
-        else:
-            for i in range(6):
-                lines[i] += "    " 
-                
-    return "\n".join(lines)
-
-def generate_banner(username):
-    display_name = username if username else "HACKER ZAPPY"
-    ascii_art = generate_ascii_name(display_name)
-    
-    return f"""
-{GREEN}{ascii_art}{RESET}
+    return f"""{GREEN}{ascii_art}{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
-{YELLOW} [+] OWNER     : {WHITE}{display_name.upper()}{RESET}
+{YELLOW} [+] OWNER     : {WHITE}{display_name}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_2}{RESET}
 {MAGENTA} [+] TERMINAL  : {WHITE}ZM TERMUX INTERFACE{RESET}
@@ -157,6 +135,45 @@ def ask_username():
             return username
         write(f"{RED}[-] Please enter a valid name.{RESET}\n")
 
+# YAHAN NAYA FUNCTION ADD KIYA HAI DEFAULT TERMINAL SET KARNE KE LIYE
+def set_permanent_terminal():
+    while True:
+        write(f"\n{YELLOW}Do you want to make this your permanent terminal? (y/n): {RESET}")
+        try:
+            choice = input().strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            write("\n")
+            sys.exit(0)
+        
+        if choice == 'y':
+            bashrc_path = Path.home() / ".bashrc"
+            script_path = os.path.abspath(sys.argv[0])
+            
+            # Check karte hain ke pehle se add toh nahi hai
+            try:
+                if bashrc_path.exists():
+                    content = bashrc_path.read_text(encoding="utf-8")
+                    if script_path in content:
+                        write(f"{GREEN}[+] Already set as default terminal.{RESET}\n")
+                        return
+            except Exception:
+                pass
+            
+            try:
+                with open(bashrc_path, "a", encoding="utf-8") as f:
+                    f.write(f"\n# HACKER ZAPPY Auto-Start\npython3 {script_path}\nexit\n")
+                write(f"{GREEN}[✓] ZAPPY is now your default permanent terminal!{RESET}\n")
+                pause(0.8)
+            except Exception as e:
+                write(f"{RED}[-] Failed to set as default: {e}{RESET}\n")
+            break
+        elif choice == 'n':
+            write(f"{CYAN}[*] Skipped. Terminal default nahi kiya gaya.{RESET}\n")
+            pause(0.8)
+            break
+        else:
+            write(f"{RED}[-] Invalid input! Sirf 'y' ya 'n' likhein.{RESET}\n")
+
 def first_setup():
     startup()
     username = ask_username()
@@ -164,6 +181,10 @@ def first_setup():
     pause(0.35)
     progress(f"Loading {username} environment...", 0.7)
     save_username(username)
+    
+    # YAHAN PE WOH DEFAULT WALA FUNCTION CALL KIYA HAI
+    set_permanent_terminal()
+    
     write(f"\n{GREEN}[✓] Welcome, {WHITE}{username}{GREEN}!{RESET}\n")
     pause(0.8)
     clear()
