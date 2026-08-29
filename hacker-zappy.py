@@ -6,6 +6,7 @@ import select
 import termios
 import tty
 import tempfile
+import subprocess
 from pathlib import Path
 
 APP_NAME = "HACKER ZAPPY"
@@ -25,22 +26,22 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
-BANNER = f"""
-{GREEN}██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
-██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
-███████║███████║██║     █████╔╝ █████╗  ██████╔╝
-██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
-██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
-███████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗       
-╚══███╔╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝       
-  ███╔╝ ███████║██████╔╝██████╔╝ ╚████╔╝        
- ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
-███████╗██║  ██║██║     ██║        ██║          
-╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          {RESET}
+def generate_banner(username):
+    display_name = username if username else "HACKER ZAPPY"
+    
+    # Try using figlet to generate dynamic ASCII art for the user's name
+    try:
+        ascii_art = subprocess.check_output(['figlet', display_name]).decode('utf-8')
+        # Remove extra blank lines at start/end
+        ascii_art = "\n".join([line for line in ascii_art.split('\n') if line.strip()])
+    except Exception:
+        # Fallback if figlet is not installed
+        ascii_art = f"\n  ██████ {display_name.upper()} ██████\n"
 
+    return f"""
+{GREEN}{ascii_art}{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
-{YELLOW} [+] OWNER     : {WHITE}HACKER ZAPPY{RESET}
+{YELLOW} [+] OWNER     : {WHITE}{display_name.upper()}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_2}{RESET}
 {MAGENTA} [+] TERMINAL  : {WHITE}ZM TERMUX INTERFACE{RESET}
@@ -48,19 +49,15 @@ BANNER = f"""
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
 """
 
-
 def write(text=""):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-
 def clear():
     write("\033[2J\033[H")
 
-
 def pause(seconds):
     time.sleep(seconds)
-
 
 def progress(message, duration=0.5):
     write(f"{GREEN}[+] {message}{RESET}\n")
@@ -73,10 +70,9 @@ def progress(message, duration=0.5):
         pause(duration / total)
     write("\n")
 
-
 def startup():
     clear()
-    write(BANNER)
+    write(generate_banner("HACKER ZAPPY"))
     write("\n")
     progress("Initializing ZAPPY environment...", 0.4)
     progress("Loading terminal interface...", 0.4)
@@ -84,7 +80,6 @@ def startup():
     progress("Checking terminal capabilities...", 0.4)
     write(f"\n{GREEN}[✓] ZAPPY terminal environment ready.{RESET}\n")
     pause(0.4)
-
 
 def sanitize_name(name):
     name = name.strip()
@@ -99,7 +94,6 @@ def sanitize_name(name):
         return None
     return result[:32]
 
-
 def load_username():
     try:
         if USER_FILE.exists():
@@ -108,11 +102,9 @@ def load_username():
         pass
     return None
 
-
 def save_username(username):
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     USER_FILE.write_text(username, encoding="utf-8")
-
 
 def ask_username():
     while True:
@@ -127,7 +119,6 @@ def ask_username():
             return username
         write(f"{RED}[-] Please enter a valid name.{RESET}\n")
 
-
 def first_setup():
     startup()
     username = ask_username()
@@ -139,10 +130,9 @@ def first_setup():
     pause(0.8)
     clear()
 
-
 def returning_user(username):
     clear()
-    write(BANNER)
+    write(generate_banner(username))
     write("\n")
     write(f"{GREEN}[+] Welcome back, {WHITE}{username}{GREEN}!{RESET}\n")
     total = 12
@@ -154,7 +144,6 @@ def returning_user(username):
     write("\n\n")
     pause(0.25)
     clear()
-
 
 def bash_script(username):
     username = username.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("`", "\\`")
@@ -230,9 +219,7 @@ trap 'zappy_debug' DEBUG
 zappy_prompt
 '''
 
-
 class ZappyTerminal:
-
     def __init__(self, username):
         self.username = username
         self.pid = None
@@ -241,7 +228,6 @@ class ZappyTerminal:
         self.rcfile_path = None
 
     def _create_rcfile(self):
-        """Write the bash setup script to a temporary file."""
         content = bash_script(self.username)
         fd, path = tempfile.mkstemp(suffix=".zappy", text=True)
         with os.fdopen(fd, "w") as f:
@@ -304,7 +290,6 @@ class ZappyTerminal:
             env["COLORTERM"] = "truecolor"
             env["ZAPPY_USER"] = self.username
 
-            # Use --rcfile to source our setup silently
             args = [shell, "--noprofile", "--rcfile", self.rcfile_path, "-i"]
             os.execvpe(shell, args, env)
 
@@ -353,7 +338,6 @@ class ZappyTerminal:
             self.restore_terminal()
             self._cleanup_rcfile()
 
-
 def main():
     username = load_username()
     if username is None:
@@ -367,7 +351,6 @@ def main():
 
     terminal = ZappyTerminal(username)
     terminal.run()
-
 
 if __name__ == "__main__":
     main()
