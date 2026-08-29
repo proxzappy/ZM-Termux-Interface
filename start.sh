@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 
-# HACKER ZAPPY configuration
+set -e
 
-ZAPPY_OWNER="HACKER ZAPPY"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-ZAPPY_CONTACT_1="03702723151"
-ZAPPY_CONTACT_2="03312044136"
+if command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+else
+    echo "[-] Python is required."
+    exit 1
+fi
 
-ZAPPY_BRAND="HACKER ZAPPY"
+chmod +x "$SCRIPT_DIR/hacker-zappy.py" 2>/dev/null || true
 
-ZAPPY_PROMPT_HOST="HACKER-ZAPPY"
+exec "$PYTHON_BIN" "$SCRIPT_DIR/hacker-zappy.py"
