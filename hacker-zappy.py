@@ -2,12 +2,11 @@ import os
 import sys
 import time
 import pty
-import tty
-import termios
 import select
+import termios
+import tty
 from pathlib import Path
 
-# ==================== CONFIGURATION ====================
 APP_NAME = "HACKER ZAPPY"
 CONTACT_1 = "03702723151"
 CONTACT_2 = "03312044136"
@@ -15,10 +14,8 @@ CONTACT_2 = "03312044136"
 CONFIG_DIR = Path.home() / ".hacker-zappy"
 USER_FILE = CONFIG_DIR / "username"
 
-# ==================== ANSI COLORS ====================
 RESET = "\033[0m"
 BOLD = "\033[1m"
-BLINK = "\033[5m"
 WHITE = "\033[1;37m"
 GREEN = "\033[38;5;46m"
 LIGHT_GREEN = "\033[38;5;82m"
@@ -27,333 +24,540 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
-# ==================== UTILITY FUNCTIONS ====================
+BANNER = f""" 
+{GREEN}██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
+██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
+███████║███████║██║     █████╔╝ █████╗  ██████╔╝
+██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
+██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+███████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗       
+╚══███╔╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝       
+  ███╔╝ ███████║██████╔╝██████╔╝ ╚████╔╝        
+ ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
+███████╗██║  ██║██║     ██║        ██║          
+╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          {RESET}
+
+
+{LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
+{YELLOW} [+] OWNER     : {WHITE}HACKER ZAPPY{RESET}
+{CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
+{CYAN} [+] CONTACT   : {WHITE}{CONTACT_2}{RESET}
+{MAGENTA} [+] TERMINAL  : {WHITE}ZM TERMUX INTERFACE{RESET}
+{GREEN} [+] STATUS    : {BOLD}OPERATIONAL [ONLINE]{RESET}
+{LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
+"""
+
+
 def write(text=""):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-def clear_screen():
+
+def clear():
     write("\033[2J\033[H")
 
-def sleep(seconds):
+
+def pause(seconds):
     time.sleep(seconds)
 
-def terminal_width():
-    try:
-        return os.get_terminal_size().columns
-    except Exception:
-        return 78
 
-def line(char="█"):
-    width = min(terminal_width(), 78)
-    return char * width
+def progress(message, duration=0.5):
+    write(f"{GREEN}[+] {message}{RESET}\n")
 
-# ==================== BANNER ====================
-def show_banner():
-    clear_screen()
-    banner = f"""
-{GREEN}██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗     ███████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗
-██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗    ╚══███╔╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝
-███████║███████║██║     █████╔╝ █████╗  ██████╔╝      ███╔╝ ███████║██████╔╝██████╔╝ ╚████╔╝ 
-██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗     ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝  
-██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║    ███████╗██║  ██║██║     ██║        ██║   
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝{RESET}
+    total = 20
 
-{LIGHT_GREEN}{line()}{RESET}
-
-{YELLOW} [+] OWNER     : {WHITE}HACKER ZAPPY{RESET}
-{CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
-{CYAN} [+] CONTACT   : {WHITE}{CONTACT_2}{RESET}
-{MAGENTA} [+] TERMINAL  : {WHITE}ZAPPY SHELL{RESET}
-{GREEN} [+] STATUS    : {BOLD}OPERATIONAL [ONLINE]{RESET}
-
-{LIGHT_GREEN}{line()}{RESET}
-"""
-    write(banner)
-
-# ==================== PROGRESS ANIMATION ====================
-def progress(message, duration=0.8):
-    write(f"\n{GREEN}[+] {message}{RESET}\n")
-    steps = 20
-    for i in range(steps + 1):
-        percentage = int((i / steps) * 100)
+    for i in range(total + 1):
         filled = "█" * i
-        empty = "░" * (steps - i)
-        write(f"\r{LIGHT_GREEN}[{filled}{empty}] {percentage:3d}%{RESET}")
-        sleep(duration / steps)
+        empty = "░" * (total - i)
+        percent = int((i / total) * 100)
+
+        write(
+            f"\r{LIGHT_GREEN}"
+            f"[{filled}{empty}]"
+            f" {percent:3d}%"
+            f"{RESET}"
+        )
+
+        pause(duration / total)
+
     write("\n")
 
-def startup_animation():
-    messages = [
-        "Initializing ZAPPY environment...",
-        "Loading terminal interface...",
-        "Preparing shell runtime...",
-        "Checking terminal capabilities..."
-    ]
-    for msg in messages:
-        progress(msg, 0.45)
-    write(f"\n{GREEN}[✓] ZAPPY terminal environment ready.{RESET}\n")
-    sleep(0.4)
 
-def short_loading(username):
-    write(f"\n{GREEN}[+] Welcome back, {WHITE}{username}{GREEN}!{RESET}\n")
-    steps = 10
-    for i in range(steps + 1):
-        filled = "█" * i
-        empty = "░" * (steps - i)
-        write(f"\r{LIGHT_GREEN}[{filled}{empty}] {i*10:3d}%{RESET}")
-        sleep(0.03)
-    write(f"\r{GREEN}[██████████] 100%{RESET}\n")
-    sleep(0.2)
+def startup():
+    clear()
+    write(BANNER)
+    write("\n")
 
-# ==================== USERNAME MANAGEMENT ====================
-def sanitize_username(name):
+    progress("Initializing ZAPPY environment...", 0.4)
+    progress("Loading terminal interface...", 0.4)
+    progress("Preparing shell runtime...", 0.4)
+    progress("Checking terminal capabilities...", 0.4)
+
+    write(
+        f"\n{GREEN}[✓] ZAPPY terminal environment ready.{RESET}\n"
+    )
+
+    pause(0.4)
+
+
+def sanitize_name(name):
     name = name.strip()
+
     if not name:
         return None
-    name = "".join(char for char in name if char.isprintable() and char not in "\x1b")
-    return name[:32]
 
-def get_saved_username():
+    result = ""
+
+    for char in name:
+        if char.isprintable() and char != "\x1b":
+            result += char
+
+    result = result.strip()
+
+    if not result:
+        return None
+
+    return result[:32]
+
+
+def load_username():
     try:
         if USER_FILE.exists():
-            name = USER_FILE.read_text(encoding="utf-8").strip()
-            return sanitize_username(name)
+            return sanitize_name(
+                USER_FILE.read_text(
+                    encoding="utf-8"
+                )
+            )
     except Exception:
         pass
+
     return None
 
-def save_username(name):
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    USER_FILE.write_text(name, encoding="utf-8")
+
+def save_username(username):
+    CONFIG_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    USER_FILE.write_text(
+        username,
+        encoding="utf-8"
+    )
+
 
 def ask_username():
-    write(f"\n{YELLOW}Enter your name: {RESET}")
     while True:
+        write(
+            f"\n{YELLOW}"
+            f"Enter your name: "
+            f"{RESET}"
+        )
+
         try:
-            name = input().strip()
+            username = input()
         except (KeyboardInterrupt, EOFError):
             write("\n")
             sys.exit(0)
-        name = sanitize_username(name)
-        if name:
-            return name
-        write(f"{RED}[-] Please enter a valid name: {RESET}")
 
-def first_run():
-    show_banner()
-    startup_animation()
+        username = sanitize_name(username)
+
+        if username:
+            return username
+
+        write(
+            f"{RED}[-] Please enter a valid name.{RESET}\n"
+        )
+
+
+def first_setup():
+    startup()
+
     username = ask_username()
-    write(f"\n{GREEN}[+] Creating user profile...{RESET}\n")
-    sleep(0.4)
-    progress(f"Loading {username} environment...", 0.7)
-    save_username(username)
-    write(f"\n{GREEN}[✓] Welcome, {WHITE}{username}{GREEN}!{RESET}\n")
-    sleep(0.8)
-    clear_screen()
 
-# ==================== SHELL PROMPT ====================
-def build_bash_ps1(username):
-    cwd = os.getcwd()
-    home = str(Path.home())
-    if cwd == home:
-        location = "~"
-    elif cwd.startswith(home + os.sep):
-        location = "~" + cwd[len(home):]
-    else:
-        location = cwd
-
-    ps1 = (
-        r"\[\033[38;5;46m\]"      # green
-        f"{username.upper()}"
-        r"\[\033[0m\]"            # reset
-        "@"
-        r"\[\033[38;5;39m\]"      # cyan
-        "HACKER-ZAPPY"
-        r"\[\033[0m\]"
-        ":"
-        r"\[\033[38;5;220m\]"     # yellow
-        f"{location}"
-        r"\[\033[0m\]"
-        " $ "
+    write(
+        f"\n{GREEN}[+] Creating profile for "
+        f"{WHITE}{username}"
+        f"{GREEN}...{RESET}\n"
     )
-    return ps1
 
-# ==================== COMMAND PROCESSING ====================
-SKIP_PROCESSING = {"clear", "reset", "exit", "logout"}
+    pause(0.35)
 
-def should_process(command):
-    command = command.strip()
-    if not command:
-        return False
-    first = command.split()[0]
-    first = os.path.basename(first)
-    if first in SKIP_PROCESSING:
-        return False
-    return True
+    progress(
+        f"Loading {username} environment...",
+        0.7
+    )
 
-def processing_animation(command):
-    command_display = command.strip()
-    if len(command_display) > 45:
-        command_display = command_display[:42] + "..."
-    write(f"\n{LIGHT_GREEN}[ZAPPY]{RESET} {CYAN}Processing:{RESET} {WHITE}{command_display}{RESET}\n")
-    frames = [
-        "▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒",
-        "█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒",
-        "███▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒",
-        "██████▒▒▒▒▒▒▒▒▒▒▒▒▒▒",
-        "█████████▒▒▒▒▒▒▒▒▒▒▒",
-        "████████████▒▒▒▒▒▒▒▒",
-        "███████████████▒▒▒▒▒",
-        "██████████████████▒▒",
+    save_username(username)
+
+    write(
+        f"\n{GREEN}[✓] Welcome, "
+        f"{WHITE}{username}"
+        f"{GREEN}!{RESET}\n"
+    )
+
+    pause(0.8)
+    clear()
+
+
+def returning_user(username):
+    clear()
+    write(BANNER)
+    write("\n")
+
+    write(
+        f"{GREEN}[+] Welcome back, "
+        f"{WHITE}{username}"
+        f"{GREEN}!{RESET}\n"
+    )
+
+    total = 12
+
+    for i in range(total + 1):
+        filled = "█" * i
+        empty = "░" * (total - i)
+
+        write(
+            f"\r{LIGHT_GREEN}"
+            f"[{filled}{empty}]"
+            f" {int((i / total) * 100):3d}%"
+            f"{RESET}"
+        )
+
+        pause(0.025)
+
+    write("\n\n")
+    pause(0.25)
+    clear()
+
+
+def bash_script(username):
+    username = (
+        username
+        .replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("$", "\\$")
+        .replace("`", "\\`")
+    )
+
+    return f'''
+export ZAPPY_USER="{username}"
+export ZAPPY_HOST="HACKER-ZAPPY"
+
+ZAPPY_GREEN=$'\\033[38;5;46m'
+ZAPPY_LIGHT_GREEN=$'\\033[38;5;82m'
+ZAPPY_CYAN=$'\\033[38;5;39m'
+ZAPPY_YELLOW=$'\\033[38;5;220m'
+ZAPPY_WHITE=$'\\033[1;37m'
+ZAPPY_RESET=$'\\033[0m'
+
+zappy_prompt() {{
+    local zappy_pwd="$PWD"
+
+    if [ "$zappy_pwd" = "$HOME" ]; then
+        zappy_pwd="~"
+    elif [[ "$zappy_pwd" == "$HOME"/* ]]; then
+        zappy_pwd="~${{zappy_pwd#$HOME}}"
+    fi
+
+    PS1="${{ZAPPY_GREEN}}${{ZAPPY_USER}}${{ZAPPY_RESET}}@${{ZAPPY_CYAN}}HACKER-ZAPPY${{ZAPPY_RESET}}:${{ZAPPY_YELLOW}}${{zappy_pwd}}${{ZAPPY_RESET}} $ "
+}}
+
+zappy_process() {{
+    local command="$1"
+
+    [ -z "$command" ] && return
+
+    case "$command" in
+        zappy_process*)
+            return
+            ;;
+        zappy_prompt*)
+            return
+            ;;
+        trap*)
+            return
+            ;;
+        clear|reset|exit|logout)
+            return
+            ;;
+        nano*|vim*|vi*|nvim*|top*|htop*|ssh*|sftp*)
+            return
+            ;;
+    esac
+
+    printf "\\n${{ZAPPY_LIGHT_GREEN}}[ZAPPY]${{ZAPPY_RESET}} ${{ZAPPY_CYAN}}Processing:${{ZAPPY_RESET}} ${{ZAPPY_WHITE}}%s${{ZAPPY_RESET}}\\n" "$command"
+
+    local frames=(
+        "▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒"
+        "█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒"
+        "███▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒"
+        "██████▒▒▒▒▒▒▒▒▒▒▒▒▒▒"
+        "█████████▒▒▒▒▒▒▒▒▒▒▒"
+        "████████████▒▒▒▒▒▒▒▒"
+        "███████████████▒▒▒▒▒"
+        "██████████████████▒▒"
         "████████████████████"
-    ]
-    for frame in frames:
-        write(f"\r{GREEN}[{frame}]{RESET}")
-        sleep(0.035)
-    write(f"\r{GREEN}[████████████████████] {WHITE}100%{RESET}\n")
-    sleep(0.08)
+    )
 
-# ==================== ZAPPY SHELL CLASS ====================
-class ZappyShell:
+    local frame
+
+    for frame in "${{frames[@]}}"; do
+        printf "\\r${{ZAPPY_GREEN}}[%s]${{ZAPPY_RESET}}" "$frame"
+        sleep 0.025
+    done
+
+    printf "\\r${{ZAPPY_GREEN}}[████████████████████]${{ZAPPY_RESET}} ${{ZAPPY_WHITE}}100%%${{ZAPPY_RESET}}\\n"
+}
+
+zappy_debug() {{
+    local command="$BASH_COMMAND"
+
+    if [ "${{ZAPPY_RUNNING:-0}}" = "1" ]; then
+        return
+    fi
+
+    case "$command" in
+        zappy_process*)
+            return
+            ;;
+        zappy_debug*)
+            return
+            ;;
+        zappy_prompt*)
+            return
+            ;;
+        local*)
+            return
+            ;;
+        trap*)
+            return
+            ;;
+    esac
+
+    ZAPPY_RUNNING=1
+    zappy_process "$command"
+    ZAPPY_RUNNING=0
+}}
+
+PROMPT_COMMAND="zappy_prompt"
+trap 'zappy_debug' DEBUG
+
+zappy_prompt
+'''
+
+class ZappyTerminal:
+
     def __init__(self, username):
         self.username = username
         self.pid = None
         self.fd = None
-        self.old_terminal = None
-
-    def spawn(self):
-        shell = os.environ.get("SHELL", "/bin/bash")
-        if not os.path.exists(shell):
-            shell = "/bin/bash"
-
-        env = os.environ.copy()
-        env["TERM"] = env.get("TERM", "xterm-256color")
-        env["COLORTERM"] = "truecolor"
-        env["ZAPPY_USER"] = self.username
-        env["PS1"] = build_bash_ps1(self.username)
-
-        self.pid, self.fd = pty.fork()
-        if self.pid == 0:
-            os.environ.update(env)
-            os.execvpe(shell, [shell, "--noprofile", "--norc"], env)
-
-        self.configure_terminal()
-
-    def configure_terminal(self):
-        self.old_terminal = termios.tcgetattr(sys.stdin)
-        tty.setraw(sys.stdin)
+        self.original_terminal = None
 
     def restore_terminal(self):
-        if self.old_terminal:
-            try:
-                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_terminal)
-            except Exception:
-                pass
+        if self.original_terminal is None:
+            return
+
+        try:
+            termios.tcsetattr(
+                sys.stdin.fileno(),
+                termios.TCSADRAIN,
+                self.original_terminal
+            )
+        except Exception:
+            pass
+
+    def set_raw_terminal(self):
+        try:
+            tty.setraw(
+                sys.stdin.fileno()
+            )
+        except Exception:
+            pass
 
     def resize_pty(self):
         try:
             import fcntl
             import struct
+
             rows, cols = os.get_terminal_size()
-            winsize = struct.pack("HHHH", rows, cols, 0, 0)
-            fcntl.ioctl(self.fd, 0x5414, winsize)
+
+            size = struct.pack(
+                "HHHH",
+                rows,
+                cols,
+                0,
+                0
+            )
+
+            fcntl.ioctl(
+                self.fd,
+                0x5414,
+                size
+            )
         except Exception:
             pass
 
-# ==================== MAIN SHELL LOOP ====================
-def run_zappy(username):
-    short_loading(username)
+    def start(self):
+        shell = os.environ.get("SHELL")
 
-    shell = ZappyShell(username)
-    shell.spawn()
-    shell.resize_pty()
+        if not shell:
+            candidates = [
+                "/data/data/com.termux/files/usr/bin/bash",
+                "/bin/bash"
+            ]
 
-    command_buffer = b""
-
-    try:
-        while True:
-            readable, _, _ = select.select([sys.stdin, shell.fd], [], [], 0.05)
-
-            # ---------- USER INPUT ----------
-            if sys.stdin in readable:
-                data = os.read(sys.stdin.fileno(), 4096)
-                if not data:
+            for candidate in candidates:
+                if os.path.exists(candidate):
+                    shell = candidate
                     break
 
-                # Ctrl-D -> exit
-                if data == b"\x04":
-                    os.write(shell.fd, b"exit\n")
-                    break
+        if not shell:
+            shell = "/bin/sh"
 
-                # Ctrl-C -> send interrupt, clear buffer
-                if b"\x03" in data:
-                    os.write(shell.fd, b"\x03")
-                    command_buffer = b""
-                    continue
+        self.pid, self.fd = pty.fork()
 
-                # Handle Enter (newline) - we need to delay it for animation
-                if b"\r" in data or b"\n" in data:
-                    normalized = data.replace(b"\r\n", b"\n")
-                    pieces = normalized.split(b"\n")
+        if self.pid == 0:
+            env = os.environ.copy()
 
-                    for i, piece in enumerate(pieces):
-                        if piece:  # characters before newline
-                            command_buffer += piece
-                            os.write(shell.fd, piece)  # forward characters
+            env["TERM"] = env.get(
+                "TERM",
+                "xterm-256color"
+            )
 
-                        if i < len(pieces) - 1:  # newline found
-                            command = command_buffer.decode("utf-8", errors="ignore")
-                            command_buffer = b""
-                            command_clean = command.strip()
+            env["COLORTERM"] = "truecolor"
+            env["ZAPPY_USER"] = self.username
 
-                            # Built-in exit / logout
-                            if command_clean in ("exit", "logout"):
-                                shell.restore_terminal()
-                                write(f"\n{GREEN}[✓] Leaving ZAPPY SHELL...{RESET}\n")
-                                return
+            os.execvpe(
+                shell,
+                [
+                    shell,
+                    "--noprofile",
+                    "--norc",
+                    "-i"
+                ],
+                env
+            )
 
-                            # Show animation for normal commands
-                            if should_process(command):
-                                shell.restore_terminal()
-                                processing_animation(command)
-                                shell.configure_terminal()
+        self.original_terminal = termios.tcgetattr(
+            sys.stdin.fileno()
+        )
 
-                            # Now send the newline to execute the command
-                            os.write(shell.fd, b"\n")
-                else:
-                    # Regular character - forward to shell immediately
-                    command_buffer += data
-                    os.write(shell.fd, data)
+        self.set_raw_terminal()
+        self.resize_pty()
 
-            # ---------- SHELL OUTPUT ----------
-            if shell.fd in readable:
-                try:
-                    output = os.read(shell.fd, 8192)
-                    if not output:
-                        break
-                    os.write(sys.stdout.fileno(), output)
-                except OSError:
-                    break
+    def send_setup(self):
+        script = bash_script(
+            self.username
+        )
 
-    except KeyboardInterrupt:
+        os.write(
+            self.fd,
+            script.encode("utf-8")
+        )
+
+        os.write(
+            self.fd,
+            b"\n"
+        )
+
+    def run(self):
+        self.start()
+        self.send_setup()
+
+        stdin_fd = sys.stdin.fileno()
+
         try:
-            os.write(shell.fd, b"\x03")
-        except Exception:
-            pass
-    finally:
-        shell.restore_terminal()
+            while True:
 
-# ==================== ENTRY POINT ====================
+                readable, _, _ = select.select(
+                    [
+                        stdin_fd,
+                        self.fd
+                    ],
+                    [],
+                    [],
+                    0.05
+                )
+
+                if stdin_fd in readable:
+                    try:
+                        data = os.read(
+                            stdin_fd,
+                            8192
+                        )
+                    except OSError:
+                        break
+
+                    if not data:
+                        break
+
+                    try:
+                        os.write(
+                            self.fd,
+                            data
+                        )
+                    except OSError:
+                        break
+
+                if self.fd in readable:
+                    try:
+                        data = os.read(
+                            self.fd,
+                            8192
+                        )
+                    except OSError:
+                        break
+
+                    if not data:
+                        break
+
+                    try:
+                        os.write(
+                            sys.stdout.fileno(),
+                            data
+                        )
+                    except OSError:
+                        break
+
+        except KeyboardInterrupt:
+            try:
+                os.write(
+                    self.fd,
+                    b"\x03"
+                )
+            except Exception:
+                pass
+
+        finally:
+            self.restore_terminal()
+
+
 def main():
-    username = get_saved_username()
-    if not username:
-        first_run()
-        username = get_saved_username()
-        if not username:
-            write(f"{RED}[-] Could not create user profile.{RESET}\n")
+    username = load_username()
+
+    if username is None:
+        first_setup()
+        username = load_username()
+
+        if username is None:
+            write(
+                f"{RED}"
+                f"[-] Failed to save profile."
+                f"{RESET}\n"
+            )
             sys.exit(1)
-    run_zappy(username)
+
+    else:
+        returning_user(username)
+
+    terminal = ZappyTerminal(
+        username
+    )
+
+    terminal.run()
+
 
 if __name__ == "__main__":
     main()
