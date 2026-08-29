@@ -6,7 +6,6 @@ import select
 import termios
 import tty
 import tempfile
-import subprocess
 from pathlib import Path
 
 APP_NAME = "HACKER ZAPPY"
@@ -26,38 +25,61 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
-def generate_banner(username=None):
-    # Agar user ka name nahi hai, toh original HACKER ZAPPY banner dikhao
-    if not username or username.upper() == "HACKER ZAPPY":
-        display_name = "HACKER ZAPPY"
-        ascii_art = """
-██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
-██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
-███████║███████║██║     █████╔╝ █████╗  ██████╔╝
-██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
-██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
-███████╗ █████╗ ██████╗ ██████╗ ██╗   ██╗       
-╚══███╔╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝       
-  ███╔╝ ███████║██████╔╝██████╔╝ ╚████╔╝        
- ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
-███████╗██║  ██║██║     ██║        ██║          
-╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          """
-    else:
-        # Jab user apna name dale, toh usko dynamically ASCII block art mein convert karo
-        display_name = username.upper()
-        try:
-            # figlet se user ka name generate hoga
-            ascii_output = subprocess.check_output(['figlet', '-f', 'standard', display_name]).decode('utf-8')
-            # Extra blank lines remove kar rahe hain
-            ascii_art = "\n" + "\n".join([line for line in ascii_output.split('\n') if line.strip()])
-        except Exception:
-            # Agar figlet install nahi hai, toh simple text dikhao
-            ascii_art = f"\n  ██████ {display_name} ██████\n"
+# VIP Custom ASCII Dictionary (Exactly matching your given style)
+ASCII_FONT = {
+    'A': ["█████╗  ", "██╔══██╗", "███████║", "██╔══██║", "██║  ██║", "╚═╝  ╚═╝"],
+    'B': ["██████╗ ", "██╔══██╗", "██████╦╝", "██╔══██╗", "██████╦╝", "╚═════╝ "],
+    'C': ["██████╗ ", "██╔════╝", "██║     ", "██║     ", "╚██████╗", " ╚═════╝"],
+    'D': ["██████╗ ", "██╔══██╗", "██║  ██║", "██║  ██║", "██████╔╝", "╚═════╝ "],
+    'E': ["███████╗", "██╔════╝", "█████╗  ", "██╔══╝  ", "███████╗", "╚══════╝"],
+    'F': ["███████╗", "██╔════╝", "█████╗  ", "██╔══╝  ", "██║     ", "╚═╝     "],
+    'G': ["██████╗ ", "██╔════╝", "██║  ███╗", "██║   ██║", "╚██████╔╝", " ╚═════╝"],
+    'H': ["██╗  ██╗", "██║  ██║", "███████║", "██╔══██║", "██║  ██║", "╚═╝  ╚═╝"],
+    'I': ["██╗", "██║", "██║", "██║", "██║", "╚═╝"],
+    'J': ["      ██╗", "      ██║", "      ██║", "██╗   ██║", "╚██████╔╝", " ╚═════╝ "],
+    'K': ["██╗  ██╗", "██║ ██╔╝", "█████╔╝ ", "██╔═██╗ ", "██║  ██╗", "╚═╝  ╚═╝"],
+    'L': ["██╗     ", "██║     ", "██║     ", "██║     ", "███████╗", "╚══════╝"],
+    'M': ["███╗   ███╗", "████╗ ████║", "██╔████╔██║", "██║╚██╔╝██║", "██║ ╚═╝ ██║", "╚═╝     ╚═╝"],
+    'N': ["██╗   ██╗", "████╗  ██║", "██╔██╗ ██║", "██║╚██╗██║", "██║ ╚████║", "╚═╝  ╚═══╝"],
+    'O': ["██████╗ ", "██╔═══██╗", "██║   ██║", "██║   ██║", "╚██████╔╝", " ╚═════╝ "],
+    'P': ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔═══╝ ", "██║     ", "╚═╝     "],
+    'Q': ["██████╗ ", "██╔═══██╗", "██║   ██║", "██║▄▄ ██║", "╚██████╔╝", " ╚══▀▀═╝ "],
+    'R': ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔══██╗", "██║  ██║", "╚═╝  ╚═╝"],
+    'S': ["███████╗", "██╔════╝", "███████╗", "╚════██║", "███████║", "╚══════╝"],
+    'T': ["████████╗", "╚══██╔══╝", "   ██║   ", "   ██║   ", "   ██║   ", "   ╚═╝   "],
+    'U': ["██╗   ██╗", "██║   ██║", "██║   ██║", "██║   ██║", "╚██████╔╝", " ╚═════╝ "],
+    'V': ["██╗   ██╗", "██║   ██║", "██║   ██║", "╚██╗ ██╔╝", " ╚████╔╝ ", "  ╚═══╝  "],
+    'W': ["██╗    ██╗", "██║    ██║", "██║ █╗ ██║", "██║███╗██║", "╚███╔███╔╝", " ╚══╝╚══╝ "],
+    'X': ["██╗  ██╗", "╚██╗██╔╝", " ╚███╔╝ ", " ██╔██╗ ", "██╔╝ ██╗", "╚═╝  ╚═╝"],
+    'Y': ["██╗   ██╗", "╚██╗ ██╔╝", " ╚████╔╝ ", "  ╚██╔╝  ", "   ██║   ", "   ╚═╝   "],
+    'Z': ["███████╗", "╚══███╔╝", "  ███╔╝ ", " ███╔╝  ", "███████╗", "╚══════╝"],
+    ' ': ["    ", "    ", "    ", "    ", "    ", "    "]
+}
 
-    return f"""{GREEN}{ascii_art}{RESET}
+def generate_ascii_name(name):
+    if not name:
+        name = "ZAPPY"
+    name = name.upper()
+    lines = ["", "", "", "", "", ""]
+    
+    for char in name:
+        if char in ASCII_FONT:
+            for i in range(6):
+                lines[i] += ASCII_FONT[char][i] + " "
+        else:
+            for i in range(6):
+                lines[i] += "    " 
+                
+    return "\n".join(lines)
+
+def generate_banner(username):
+    display_name = username if username else "HACKER ZAPPY"
+    ascii_art = generate_ascii_name(display_name)
+    
+    return f"""
+{GREEN}{ascii_art}{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
-{YELLOW} [+] OWNER     : {WHITE}{display_name}{RESET}
+{YELLOW} [+] OWNER     : {WHITE}{display_name.upper()}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_2}{RESET}
 {MAGENTA} [+] TERMINAL  : {WHITE}ZM TERMUX INTERFACE{RESET}
