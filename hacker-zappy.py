@@ -26,8 +26,322 @@ RED = "\033[38;5;196m"
 CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
+# ============================================================
+# BLOCK LETTER FONT MAPPING (6 rows, 7 columns per letter)
+# ============================================================
+BLOCK_FONT = {
+    'A': [
+        " █████╗ ",
+        "██╔══██╗",
+        "███████║",
+        "██╔══██║",
+        "██║  ██║",
+        "╚═╝  ╚═╝"
+    ],
+    'B': [
+        "██████╗ ",
+        "██╔══██╗",
+        "██████╔╝",
+        "██╔══██╗",
+        "██████╔╝",
+        "╚═════╝ "
+    ],
+    'C': [
+        " ██████╗",
+        "██╔════╝",
+        "██║     ",
+        "██║     ",
+        "╚██████╗",
+        " ╚═════╝"
+    ],
+    'D': [
+        "██████╗ ",
+        "██╔══██╗",
+        "██║  ██║",
+        "██║  ██║",
+        "██████╔╝",
+        "╚═════╝ "
+    ],
+    'E': [
+        "███████╗",
+        "██╔════╝",
+        "█████╗  ",
+        "██╔══╝  ",
+        "███████╗",
+        "╚══════╝"
+    ],
+    'F': [
+        "███████╗",
+        "██╔════╝",
+        "█████╗  ",
+        "██╔══╝  ",
+        "██║     ",
+        "╚═╝     "
+    ],
+    'G': [
+        " ██████╗",
+        "██╔════╝",
+        "██║  ███╗",
+        "██║   ██║",
+        "╚██████╔╝",
+        " ╚═════╝ "
+    ],
+    'H': [
+        "██╗  ██╗",
+        "██║  ██║",
+        "███████║",
+        "██╔══██║",
+        "██║  ██║",
+        "╚═╝  ╚═╝"
+    ],
+    'I': [
+        "██╗",
+        "██║",
+        "██║",
+        "██║",
+        "██║",
+        "╚═╝"
+    ],
+    'J': [
+        "     ██╗",
+        "     ██║",
+        "     ██║",
+        "██╗  ██║",
+        "╚█████╔╝",
+        " ╚════╝ "
+    ],
+    'K': [
+        "██╗  ██╗",
+        "██║ ██╔╝",
+        "█████╔╝ ",
+        "██╔═██╗ ",
+        "██║  ██╗",
+        "╚═╝  ╚═╝"
+    ],
+    'L': [
+        "██╗     ",
+        "██║     ",
+        "██║     ",
+        "██║     ",
+        "███████╗",
+        "╚══════╝"
+    ],
+    'M': [
+        "███╗   ███╗",
+        "████╗ ████║",
+        "██╔████╔██║",
+        "██║╚██╔╝██║",
+        "██║ ╚═╝ ██║",
+        "╚═╝     ╚═╝"
+    ],
+    'N': [
+        "███╗   ██╗",
+        "████╗  ██║",
+        "██╔██╗ ██║",
+        "██║╚██╗██║",
+        "██║ ╚████║",
+        "╚═╝  ╚═══╝"
+    ],
+    'O': [
+        " ██████╗",
+        "██╔═══██╗",
+        "██║   ██║",
+        "██║   ██║",
+        "╚██████╔╝",
+        " ╚═════╝ "
+    ],
+    'P': [
+        "██████╗ ",
+        "██╔══██╗",
+        "██████╔╝",
+        "██╔═══╝ ",
+        "██║     ",
+        "╚═╝     "
+    ],
+    'Q': [
+        " ██████╗ ",
+        "██╔═══██╗",
+        "██║   ██║",
+        "██║▄▄ ██║",
+        "╚██████╔╝",
+        " ╚══▀▀═╝ "
+    ],
+    'R': [
+        "██████╗ ",
+        "██╔══██╗",
+        "██████╔╝",
+        "██╔══██╗",
+        "██║  ██║",
+        "╚═╝  ╚═╝"
+    ],
+    'S': [
+        "███████╗",
+        "██╔════╝",
+        "███████╗",
+        "╚════██║",
+        "███████║",
+        "╚══════╝"
+    ],
+    'T': [
+        "████████╗",
+        "╚══██╔══╝",
+        "   ██║   ",
+        "   ██║   ",
+        "   ██║   ",
+        "   ╚═╝   "
+    ],
+    'U': [
+        "██╗   ██╗",
+        "██║   ██║",
+        "██║   ██║",
+        "██║   ██║",
+        "╚██████╔╝",
+        " ╚═════╝ "
+    ],
+    'V': [
+        "██╗   ██╗",
+        "██║   ██║",
+        "██║   ██║",
+        "╚██╗ ██╔╝",
+        " ╚████╔╝ ",
+        "  ╚═══╝  "
+    ],
+    'W': [
+        "██╗    ██╗",
+        "██║    ██║",
+        "██║ █╗ ██║",
+        "██║███╗██║",
+        "╚███╔███╔╝",
+        " ╚══╝╚══╝ "
+    ],
+    'X': [
+        "██╗  ██╗",
+        "╚██╗██╔╝",
+        " ╚███╔╝ ",
+        " ██╔██╗ ",
+        "██╔╝ ██╗",
+        "╚═╝  ╚═╝"
+    ],
+    'Y': [
+        "██╗   ██╗",
+        "╚██╗ ██╔╝",
+        " ╚████╔╝ ",
+        "  ╚██╔╝  ",
+        "   ██║   ",
+        "   ╚═╝   "
+    ],
+    'Z': [
+        "███████╗",
+        "╚══███╔╝",
+        "  ███╔╝ ",
+        " ███╔╝  ",
+        "███████╗",
+        "╚══════╝"
+    ],
+    '0': [
+        " ██████╗",
+        "██╔═══██╗",
+        "██║   ██║",
+        "██║   ██║",
+        "╚██████╔╝",
+        " ╚═════╝ "
+    ],
+    '1': [
+        " ██╗",
+        "███║",
+        "╚██║",
+        " ██║",
+        " ██║",
+        " ╚═╝"
+    ],
+    '2': [
+        "██████╗ ",
+        "╚════██╗",
+        "█████╔╝ ",
+        "██╔═══╝ ",
+        "███████╗",
+        "╚══════╝"
+    ],
+    '3': [
+        "██████╗ ",
+        "╚════██╗",
+        "█████╔╝ ",
+        "╚════██╗",
+        "██████╔╝",
+        "╚═════╝ "
+    ],
+    '4': [
+        "██╗  ██╗",
+        "██║  ██║",
+        "███████║",
+        "╚════██║",
+        "     ██║",
+        "     ╚═╝"
+    ],
+    '5': [
+        "███████╗",
+        "██╔════╝",
+        "███████╗",
+        "╚════██║",
+        "███████║",
+        "╚══════╝"
+    ],
+    '6': [
+        " ██████╗",
+        "██╔════╝",
+        "███████╗",
+        "██╔═══██╗",
+        "╚██████╔╝",
+        " ╚═════╝ "
+    ],
+    '7': [
+        "███████╗",
+        "╚════██║",
+        "   ██╔╝ ",
+        "  ██╔╝  ",
+        "  ██║   ",
+        "  ╚═╝   "
+    ],
+    '8': [
+        " █████╗ ",
+        "██╔══██╗",
+        "╚█████╔╝",
+        "██╔══██╗",
+        "╚█████╔╝",
+        " ╚════╝ "
+    ],
+    '9': [
+        " █████╗ ",
+        "██╔══██╗",
+        "╚██████║",
+        " ╚═══██║",
+        " █████╔╝",
+        " ╚════╝ "
+    ],
+    ' ': [
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "       "
+    ]
+}
+
+def block_word(word):
+    """Convert a word to block letters (6 rows)."""
+    rows = [""] * 6
+    for ch in word.upper():
+        # Get the block for this character, fallback to '?' block if not found
+        block = BLOCK_FONT.get(ch, BLOCK_FONT[' '])
+        for i in range(6):
+            rows[i] += block[i] + " "  # add one space between letters
+    # Remove trailing spaces
+    for i in range(6):
+        rows[i] = rows[i].rstrip()
+    return rows
+
 def generate_banner(username=None):
-    # Agar user ka name nahi hai, toh original HACKER ZAPPY banner dikhao
     if not username or username.upper() == "HACKER ZAPPY":
         display_name = "HACKER ZAPPY"
         ascii_art = """
@@ -44,16 +358,16 @@ def generate_banner(username=None):
 ███████╗██║  ██║██║     ██║        ██║          
 ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          """
     else:
-        # Jab user apna name dale, toh usko dynamically ASCII block art mein convert karo
         display_name = username.upper()
-        try:
-            # figlet se user ka name generate hoga
-            ascii_output = subprocess.check_output(['figlet', '-f', 'standard', display_name]).decode('utf-8')
-            # Extra blank lines remove kar rahe hain
-            ascii_art = "\n" + "\n".join([line for line in ascii_output.split('\n') if line.strip()])
-        except Exception:
-            # Agar figlet install nahi hai, toh simple text dikhao
-            ascii_art = f"\n  ██████ {display_name} ██████\n"
+        # Split username into words and generate block art for each word
+        words = display_name.split()
+        all_rows = []
+        for idx, word in enumerate(words):
+            word_rows = block_word(word)
+            all_rows.extend(word_rows)
+            if idx < len(words) - 1:
+                all_rows.append("")  # blank line between words
+        ascii_art = "\n" + "\n".join(all_rows)
 
     return f"""{GREEN}{ascii_art}{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
@@ -135,7 +449,6 @@ def ask_username():
             return username
         write(f"{RED}[-] Please enter a valid name.{RESET}\n")
 
-# YAHAN NAYA FUNCTION ADD KIYA HAI DEFAULT TERMINAL SET KARNE KE LIYE
 def set_permanent_terminal():
     while True:
         write(f"\n{YELLOW}Do you want to make this your permanent terminal? (y/n): {RESET}")
@@ -149,7 +462,6 @@ def set_permanent_terminal():
             bashrc_path = Path.home() / ".bashrc"
             script_path = os.path.abspath(sys.argv[0])
             
-            # Check karte hain ke pehle se add toh nahi hai
             try:
                 if bashrc_path.exists():
                     content = bashrc_path.read_text(encoding="utf-8")
@@ -182,7 +494,6 @@ def first_setup():
     progress(f"Loading {username} environment...", 0.7)
     save_username(username)
     
-    # YAHAN PE WOH DEFAULT WALA FUNCTION CALL KIYA HAI
     set_permanent_terminal()
     
     write(f"\n{GREEN}[✓] Welcome, {WHITE}{username}{GREEN}!{RESET}\n")
