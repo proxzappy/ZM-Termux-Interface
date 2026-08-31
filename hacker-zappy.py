@@ -27,7 +27,7 @@ CYAN = "\033[38;5;39m"
 MAGENTA = "\033[38;5;201m"
 
 # ============================================================
-# BLOCK LETTER FONT MAPPING (6 rows, 7 columns per letter)
+# BLOCK LETTER FONT MAPPING (6 rows per letter)
 # ============================================================
 BLOCK_FONT = {
     'A': [
@@ -332,11 +332,9 @@ def block_word(word):
     """Convert a word to block letters (6 rows)."""
     rows = [""] * 6
     for ch in word.upper():
-        # Get the block for this character, fallback to '?' block if not found
         block = BLOCK_FONT.get(ch, BLOCK_FONT[' '])
         for i in range(6):
-            rows[i] += block[i] + " "  # add one space between letters
-    # Remove trailing spaces
+            rows[i] += block[i] + " "
     for i in range(6):
         rows[i] = rows[i].rstrip()
     return rows
@@ -359,14 +357,10 @@ def generate_banner(username=None):
 ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          """
     else:
         display_name = username.upper()
-        # Split username into words and generate block art for each word
         words = display_name.split()
         all_rows = []
-        for idx, word in enumerate(words):
-            word_rows = block_word(word)
-            all_rows.extend(word_rows)
-            if idx < len(words) - 1:
-                all_rows.append("")  # blank line between words
+        for word in words:
+            all_rows.extend(block_word(word))
         ascii_art = "\n" + "\n".join(all_rows)
 
     return f"""{GREEN}{ascii_art}{RESET}
@@ -473,7 +467,7 @@ def set_permanent_terminal():
             
             try:
                 with open(bashrc_path, "a", encoding="utf-8") as f:
-                    f.write(f"\n# HACKER ZAPPY Auto-Start\npython3 {script_path}\nexit\n")
+                    f.write(f"\n# >>> HACKER ZAPPY START >>>\npython3 {script_path}\nexit\n# <<< HACKER ZAPPY END <<<\n")
                 write(f"{GREEN}[✓] ZAPPY is now your default permanent terminal!{RESET}\n")
                 pause(0.8)
             except Exception as e:
@@ -485,6 +479,42 @@ def set_permanent_terminal():
             break
         else:
             write(f"{RED}[-] Invalid input! Sirf 'y' ya 'n' likhein.{RESET}\n")
+
+def remove_permanent_terminal():
+    """Remove ZAPPY auto-start from .bashrc"""
+    bashrc_path = Path.home() / ".bashrc"
+    if not bashrc_path.exists():
+        print(f"{RED}[-] .bashrc not found.{RESET}")
+        return False
+
+    try:
+        content = bashrc_path.read_text(encoding="utf-8")
+        lines = content.splitlines()
+        new_lines = []
+        skip = False
+        removed = False
+
+        for line in lines:
+            if "# >>> HACKER ZAPPY START >>>" in line:
+                skip = True
+                removed = True
+                continue
+            if "# <<< HACKER ZAPPY END <<<" in line:
+                skip = False
+                continue
+            if not skip:
+                new_lines.append(line)
+
+        if removed:
+            bashrc_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+            print(f"{GREEN}[✓] ZAPPY default terminal removed successfully.{RESET}")
+            return True
+        else:
+            print(f"{YELLOW}[*] ZAPPY default terminal not found in .bashrc.{RESET}")
+            return False
+    except Exception as e:
+        print(f"{RED}[-] Failed to remove: {e}{RESET}")
+        return False
 
 def first_setup():
     startup()
@@ -709,6 +739,11 @@ class ZappyTerminal:
             self._cleanup_rcfile()
 
 def main():
+    # Command-line argument to remove default terminal
+    if "--remove-default" in sys.argv:
+        remove_permanent_terminal()
+        sys.exit(0)
+
     username = load_username()
     if username is None:
         first_setup()
