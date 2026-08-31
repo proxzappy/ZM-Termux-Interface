@@ -339,6 +339,7 @@ def block_word(word):
 
 def generate_banner(username=None):
     if not username or username.upper() == "HACKER ZAPPY":
+        # Original full banner for first time / default
         display_name = "HACKER ZAPPY"
         ascii_art = """
 ██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
@@ -353,15 +354,7 @@ def generate_banner(username=None):
  ███╔╝  ██╔══██║██╔═══╝ ██╔═══╝   ╚██╔╝         
 ███████╗██║  ██║██║     ██║        ██║          
 ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ╚═╝          """
-    else:
-        display_name = username.upper()
-        words = display_name.split()
-        all_rows = []
-        for word in words:
-            all_rows.extend(block_word(word))
-        ascii_art = "\n" + "\n".join(all_rows)
-
-    return f"""{GREEN}{ascii_art}{RESET}
+        return f"""{GREEN}{ascii_art}{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
 {YELLOW} [+] OWNER     : {WHITE}{display_name}{RESET}
 {CYAN} [+] CONTACT   : {WHITE}{CONTACT_1}{RESET}
@@ -370,6 +363,15 @@ def generate_banner(username=None):
 {GREEN} [+] STATUS    : {BOLD}OPERATIONAL [ONLINE]{RESET}
 {LIGHT_GREEN}██████████████████████████████████████████████████████████████████████{RESET}
 """
+    else:
+        # Custom username: only block letters, no extra lines
+        display_name = username.upper()
+        words = display_name.split()
+        all_rows = []
+        for word in words:
+            all_rows.extend(block_word(word))
+        ascii_art = "\n".join(all_rows)
+        return f"{GREEN}{ascii_art}{RESET}\n"
 
 def write(text=""):
     sys.stdout.write(text)
@@ -526,7 +528,6 @@ def first_setup():
     
     write(f"\n{GREEN}[✓] Welcome, {WHITE}{username}{GREEN}!{RESET}\n")
     pause(0.8)
-    # Ab user ka banner dikhayein aur phir terminal start hoga
     clear()
     write(generate_banner(username))
     write("\n")
@@ -543,9 +544,7 @@ def returning_user(username):
         write(f"\r{LIGHT_GREEN}[{filled}{empty}] {int((i / total) * 100):3d}%{RESET}")
         pause(0.025)
     write("\n")
-    # Ab screen clear nahi karenge, terminal yahin se start hoga
-    # pause(0.25)
-    # clear()  # isse remove kar diya
+    # No clear() so banner stays visible above terminal
 
 def bash_script(username):
     username = username.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("`", "\\`")
